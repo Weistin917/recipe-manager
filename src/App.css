@@ -13,6 +13,10 @@ body > #root > div {
 }
 
 .appRow {
-  padding-top: 2%;
-  padding-bottom: 2%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+label {
+  color: black;
 }

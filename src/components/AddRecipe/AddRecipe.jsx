@@ -1,14 +1,50 @@
-import React from "react";
+import React, { useState } from "react";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../../../firebaseConfig";
+import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
+import { storage } from "../../../firebaseConfig";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, FloatingLabel } from "react-bootstrap";
 
 function AddRecipe() {
+    const [name, setName] = useState("");
+    const [desc, setDesc] = useState("");
+    const [img, setImg] = useState("");
+
+    const handleAddRecipe = async (e) => {
+        e.preventDefault();
+        const file = e.target[2]?.files[0];
+        try {
+            if (file) {
+                const storageRef = ref(storage, `recipes/${file.name}`);
+                const uploadImg = uploadBytesResumable(storageRef, file);
+
+                uploadImg.on("state_changed", () => {}, (err) => alert(err), () => {
+                    getDownloadURL(uploadImg.snapshot.ref).then((imgUrl) => setImg(imgUrl))
+                });
+            }
+            await addDoc(collection(db, "recipes"), {'title':name, 'imgUrl':img, 'description':desc});
+            setName("");
+            setDesc("");
+            setImg("");
+        } catch (err) {
+            console.error("Error adding recipe: ", err);
+        }
+    }
+
     return (
-        <div className="d-grid gap-3 form">
-            <Form.Control type="text" placeholder="Title*" required />
-            <Form.Control as="textarea" rows={3} placeholder="Description*" required />
-            <Button type="submit" variant="info">Add Recipe</Button>
-        </div>
+        <Form onSubmit={handleAddRecipe} className="form-floating">
+            <div className="d-grid gap-3">
+                <FloatingLabel label='Title*'>
+                    <Form.Control type="text" placeholder="Title" value={name} onChange={(e) => setName(e.target.value)} required />
+                </FloatingLabel>
+                <FloatingLabel label='Description*'>
+                    <Form.Control as="textarea" rows={3} placeholder="Description" value={desc} onChange={(e) => setDesc(e.target.value)} required />
+                </FloatingLabel>
+                <Form.Control type="file" accept="image/png, image/jpeg" />
+                <Button type="submit" variant="info">Add Recipe</Button>
+            </div>
+        </Form>
     );
 }
 
