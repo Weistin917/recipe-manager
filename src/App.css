@@ -1,0 +1,18 @@
+body > #root > div {
+  height: 100vh;
+}
+
+#root {
+
+  margin: 0 auto;
+  padding: 2rem;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #77806e;
+}
+
+.appRow {
+  padding-top: 2%;
+  padding-bottom: 2%;
+}
