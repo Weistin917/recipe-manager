@@ -1,3 +1,4 @@
+// List of added recipes. For each item, allows editing and deleting of the corresponding recipe.
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -6,13 +7,20 @@ import { Stack, Card, Button, FloatingLabel, Form } from "react-bootstrap";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function RecipeList() {
+    /* React states
+     * recipes: stores the added recipes in Firestore
+     * editingRecipe: stores the current editing recipe
+     * editTitle, editDesc, editImg: stores the new entered values when editing
+     * */
     const [recipes, setRecipes] = useState([]);
     const [editingRecipe, setEditingRecipe] = useState(null);
     const [editTitle, setEditTitle] = useState("");
     const [editDesc, setEditDesc] = useState("");
     const [editImg, setEditImg] = useState(null);
+    // Recipe number counter
     let n = 1;
 
+    // Constantly obtain the stored data in Firestore
     useEffect(() => {
         const colRef = collection(db, "recipes");
         const unsubscribe = onSnapshot(colRef, (snapshot) => {
@@ -26,26 +34,31 @@ function RecipeList() {
         return () => unsubscribe();
     }, []);
 
+    // Function called to start editing a recipe
     function handdleEdit(recipe) {
         setEditingRecipe(recipe.id);
         setEditTitle(recipe.title);
         setEditDesc(recipe.description);
     }
 
+    // Function called to cancel the edit process
     function handleCancel() {
         setEditingRecipe(null);
     }
 
+    // Function called when the editing is finished. 
     const handleSave = async (recipe) => {
         try {
             const imgUrl = recipe.imgUrl;
             const recipeRef = doc(db, "recipes", recipe.id);
+            // Checks if a new file for the image has been selected to upload it to firebase storage.
             if (editImg) { 
                 const storageRef = ref(storage, `recipes/${editImg.name}`);
                 const uploadPromise = uploadBytes(storageRef, editImg);
                 uploadPromise.then(() => getDownloadURL(storageRef).then(
                         async (url) => {
-                            await deleteObject(ref(storage, imgUrl));
+                            // If there was an image, delete it from firebase storage
+                            if (imgUrl) await deleteObject(ref(storage, imgUrl));
                             await updateDoc(recipeRef, { title: editTitle, description: editDesc, imgUrl: url});
                         }).catch((err) => console.error("Error getting url: ", err))
                 ).catch((err) => console.error("Error uploading image: ", err));
@@ -58,9 +71,11 @@ function RecipeList() {
         }
     }
 
+    // Function called to delete a recipe.
     const handleDelete = async (recipe) => {
         try {
             await deleteDoc(doc(db, "recipes", recipe.id));
+            // If there was an image, delete it from firebase storage
             if (recipe.imgUrl) await deleteObject(ref(storage, recipe.imgUrl));
         } catch (err) {
             console.error("Error deleting recipe: ", err);
@@ -69,6 +84,7 @@ function RecipeList() {
 
     return (
         <>
+        {/* style for icon buttons */}
         <style type="text/css">
             {`
             .btn-icon {
@@ -82,10 +98,12 @@ function RecipeList() {
             `}
         </style>
         <Stack gap={3}>
-            {recipes.map((recipe) => (
+            {/* Render a card for each recipe in the list */
+            recipes.map((recipe) => (
                 <Card>
                     <Card.Header>Recipe #{n++}</Card.Header>
                     <Card.Body>
+                        {/* Checks to wheter render the editing state or the view state */}
                         {editingRecipe === recipe.id ? (
                             <>
                             <div className="d-flex gap-2 mb-2">

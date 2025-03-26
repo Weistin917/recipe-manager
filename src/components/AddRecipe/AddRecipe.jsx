@@ -1,3 +1,4 @@
+// Add recipe form
 import React, { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../../firebaseConfig";
@@ -7,13 +8,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Form, FloatingLabel } from "react-bootstrap";
 
 function AddRecipe() {
+    // React states: stores the entered name and description of the recipe.
     const [name, setName] = useState("");
     const [desc, setDesc] = useState("");
 
+    // Function to add a new recipe
     const handleAddRecipe = async (e) => {
         e.preventDefault();
         const file = e.target[2]?.files[0];
         try {
+            // if a file is selected, upload it to firebase storage. Structured with promises to ensure the order of execution is correct.
             if (file) {
                 const storageRef = ref(storage, `recipes/${file.name}`);
                 const uploadPromise = uploadBytes(storageRef, file);
@@ -23,6 +27,7 @@ function AddRecipe() {
                         }).catch((err) => console.error("Error getting url: ", err))
                 ).catch((err) => console.error("Error uploading image: ", err));
             } else {
+                // otherwise, the image url is set blank.
                 await addDoc(collection(db, "recipes"), {'title':name, 'imgUrl':"", 'description':desc});
             }
             setName("");
