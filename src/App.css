@@ -20,3 +20,16 @@ body > #root > div {
 label {
   color: black;
 }
+
+.recipeImg {
+  height: 10rem;
+  border-radius: 10px;
+}
+
+.list-icons {
+  align-items: center;
+}
+
+i {
+  font-size: 2rem;
+}
