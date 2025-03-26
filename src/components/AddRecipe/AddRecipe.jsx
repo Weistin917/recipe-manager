@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../../firebaseConfig";
-import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 import { storage } from "../../../firebaseConfig";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Form, FloatingLabel } from "react-bootstrap";
@@ -17,11 +17,8 @@ function AddRecipe() {
         try {
             if (file) {
                 const storageRef = ref(storage, `recipes/${file.name}`);
-                const uploadImg = uploadBytesResumable(storageRef, file);
-
-                uploadImg.on("state_changed", () => {}, (err) => alert(err), () => {
-                    getDownloadURL(uploadImg.snapshot.ref).then((imgUrl) => setImg(imgUrl))
-                });
+                await uploadBytes(storageRef, file);
+                getDownloadURL(storageRef).then((imgUrl) => setImg(imgUrl)).catch((err) => console.error("Error getting url: ", err));
             }
             await addDoc(collection(db, "recipes"), {'title':name, 'imgUrl':img, 'description':desc});
             setName("");
@@ -41,7 +38,7 @@ function AddRecipe() {
                 <FloatingLabel label='Description*'>
                     <Form.Control as="textarea" rows={3} placeholder="Description" value={desc} onChange={(e) => setDesc(e.target.value)} required />
                 </FloatingLabel>
-                <Form.Control type="file" accept="image/png, image/jpeg" />
+                <Form.Control type="file" accept="image/png, image/jpeg, image/jpg" />
                 <Button type="submit" variant="info">Add Recipe</Button>
             </div>
         </Form>

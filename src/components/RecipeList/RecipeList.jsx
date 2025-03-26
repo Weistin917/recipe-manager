@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
-import { db } from "../../../firebaseConfig";
+import { ref, deleteObject } from "firebase/storage";
+import { db, storage } from "../../../firebaseConfig";
 import { Stack, Card, Button, FloatingLabel, Form } from "react-bootstrap";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -34,6 +35,15 @@ function RecipeList() {
         setEditingRecipe(null);
     }
 
+    const handleDelete = async (recipe) => {
+        try {
+            await deleteDoc(doc(db, "recipes", recipe.id));
+            if (recipe.imgUrl) await deleteObject(ref(storage, recipe.imgUrl));
+        } catch (err) {
+            console.error("Error deleting recipe: ", err);
+        }
+    };
+
     return (
         <>
         <style type="text/css">
@@ -63,13 +73,13 @@ function RecipeList() {
                                     <Form.Control as="textarea" placeholder="Description" value={editDesc} required />
                                 </FloatingLabel>
                                 <FloatingLabel label='Image'>
-                                    <Form.Control type="file" placeholder="Image" accept="image/png, image/jpeg" />
+                                    <Form.Control type="file" placeholder="Image" accept="image/png, image/jpeg, image/jpg" />
                                 </FloatingLabel>
                                 <Button variant="icon">
-                                    <i class="bi bi-save" />
+                                    <i className="bi bi-save" />
                                 </Button>
                                 <Button variant="icon" onClick={() => handleCancel()}>
-                                    <i class="bi bi-x-circle-fill" />
+                                    <i className="bi bi-x-circle-fill" />
                                 </Button>
                             </div>
                             </>
@@ -81,10 +91,10 @@ function RecipeList() {
                                 {recipe.imgUrl ? (<img className="recipeImg" src={recipe.imgUrl} alt="Recipe image" />) : (<div></div>)}
                                 <div className="d-flex gap-2 mb-2 justify-content-between list-icons">
                                     <Button variant="icon" onClick={() => handdleEdit(recipe)}>
-                                        <i class="bi bi-pencil-square" />
+                                        <i className="bi bi-pencil-square" />
                                     </Button>
-                                    <Button variant="icon">
-                                        <i class="bi bi-trash"/>
+                                    <Button variant="icon" onClick={() => handleDelete(recipe)}>
+                                        <i className="bi bi-trash"/>
                                     </Button>
                                 </div>
                             </div>
