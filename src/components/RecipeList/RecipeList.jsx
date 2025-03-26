@@ -1,11 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { db } from "../../../firebaseConfig";
 import { Stack, Card, Button } from "react-bootstrap";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function RecipeList() {
-    let recipes = [{ id:1, title:"Bread", description:"A bread", imgUrl:"https://ichef.bbc.co.uk/ace/standard/1600/food/recipes/paul_hollywoods_crusty_83536_16x9.jpg.webp" }];
+    const [recipes, setRecipes] = useState([]);
     let n = 1;
+
+    useEffect(() => {
+        const colRef = collection(db, "recipes");
+        const unsubscribe = onSnapshot(colRef, (snapshot) => {
+            const recipeData = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setRecipes(recipeData);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     return (
         <>
