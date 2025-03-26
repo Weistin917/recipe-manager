@@ -2,7 +2,7 @@
 Recipe manager aplication that integrates Firestore to manage a list of recipes.
 
 ## Live Preview at Code Sandbox
-
+https://2k56c7-5173.csb.app/
 ## Set up instructions
 After pulling the repository, run `npm install` to install the dependencies. Then run `npm run dev` to host a local server.
 ## Examples
