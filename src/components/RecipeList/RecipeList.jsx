@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
-import { ref, deleteObject } from "firebase/storage";
+import { ref, deleteObject, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../../firebaseConfig";
 import { Stack, Card, Button, FloatingLabel, Form } from "react-bootstrap";
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -10,6 +10,7 @@ function RecipeList() {
     const [editingRecipe, setEditingRecipe] = useState(null);
     const [editTitle, setEditTitle] = useState("");
     const [editDesc, setEditDesc] = useState("");
+    const [editImg, setEditImg] = useState(null);
     let n = 1;
 
     useEffect(() => {
@@ -33,6 +34,28 @@ function RecipeList() {
 
     function handleCancel() {
         setEditingRecipe(null);
+    }
+
+    const handleSave = async (recipe) => {
+        try {
+            const imgUrl = recipe.imgUrl;
+            const recipeRef = doc(db, "recipes", recipe.id);
+            if (editImg) { 
+                const storageRef = ref(storage, `recipes/${editImg.name}`);
+                const uploadPromise = uploadBytes(storageRef, editImg);
+                uploadPromise.then(() => getDownloadURL(storageRef).then(
+                        async (url) => {
+                            await deleteObject(ref(storage, imgUrl));
+                            await updateDoc(recipeRef, { title: editTitle, description: editDesc, imgUrl: url});
+                        }).catch((err) => console.error("Error getting url: ", err))
+                ).catch((err) => console.error("Error uploading image: ", err));
+            } else {
+                await updateDoc(recipeRef, { title: editTitle, description: editDesc, imgUrl: imgUrl});
+            }
+            setEditingRecipe(null);
+        } catch (err) {
+            console.error("Error updating recipe: ", err);
+        }
     }
 
     const handleDelete = async (recipe) => {
@@ -67,15 +90,15 @@ function RecipeList() {
                             <>
                             <div className="d-flex gap-2 mb-2">
                                 <FloatingLabel label='Title'>
-                                    <Form.Control type="text" placeholder="Title" value={editTitle} required />
+                                    <Form.Control type="text" placeholder="Title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
                                 </FloatingLabel>
                                 <FloatingLabel label='Description'>
-                                    <Form.Control as="textarea" placeholder="Description" value={editDesc} required />
+                                    <Form.Control as="textarea" placeholder="Description" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} required />
                                 </FloatingLabel>
                                 <FloatingLabel label='Image'>
-                                    <Form.Control type="file" placeholder="Image" accept="image/png, image/jpeg, image/jpg" />
+                                    <Form.Control type="file" placeholder="Image" accept="image/png, image/jpeg, image/jpg" onChange={(e) => setEditImg(e.target.files[0])} />
                                 </FloatingLabel>
-                                <Button variant="icon">
+                                <Button variant="icon" onClick={() => handleSave(recipe)}>
                                     <i className="bi bi-save" />
                                 </Button>
                                 <Button variant="icon" onClick={() => handleCancel()}>

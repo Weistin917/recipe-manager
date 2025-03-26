@@ -9,7 +9,6 @@ import { Button, Form, FloatingLabel } from "react-bootstrap";
 function AddRecipe() {
     const [name, setName] = useState("");
     const [desc, setDesc] = useState("");
-    const [img, setImg] = useState("");
 
     const handleAddRecipe = async (e) => {
         e.preventDefault();
@@ -17,13 +16,17 @@ function AddRecipe() {
         try {
             if (file) {
                 const storageRef = ref(storage, `recipes/${file.name}`);
-                await uploadBytes(storageRef, file);
-                getDownloadURL(storageRef).then((imgUrl) => setImg(imgUrl)).catch((err) => console.error("Error getting url: ", err));
+                const uploadPromise = uploadBytes(storageRef, file);
+                uploadPromise.then(() => getDownloadURL(storageRef).then(
+                        async (imgUrl) => {
+                            await addDoc(collection(db, "recipes"), {'title':name, 'imgUrl':imgUrl, 'description':desc});
+                        }).catch((err) => console.error("Error getting url: ", err))
+                ).catch((err) => console.error("Error uploading image: ", err));
+            } else {
+                await addDoc(collection(db, "recipes"), {'title':name, 'imgUrl':"", 'description':desc});
             }
-            await addDoc(collection(db, "recipes"), {'title':name, 'imgUrl':img, 'description':desc});
             setName("");
             setDesc("");
-            setImg("");
         } catch (err) {
             console.error("Error adding recipe: ", err);
         }
